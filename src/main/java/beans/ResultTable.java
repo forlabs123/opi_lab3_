@@ -33,7 +33,6 @@ public class ResultTable implements Serializable {
 
     private final Lock lock = new ReentrantLock();
     private static final Logger LOGGER = LogManager.getLogger(ResultTable.class);
-    //change3
 
     @PostConstruct
     public void init() {
