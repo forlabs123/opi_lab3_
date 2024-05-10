@@ -8,4 +8,5 @@ public class AreaCheckerTest {
     void getResult() {
         assertTrue(true);
     }
+    //change2
 }
