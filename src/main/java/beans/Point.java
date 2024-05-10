@@ -44,7 +44,6 @@ public class Point implements Serializable {
         this.attemptTime = attemptTime;
         this.executionTime = executionTime;
     }
-    //change
 
     public void check() {
         long start = System.nanoTime();
