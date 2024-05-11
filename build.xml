@@ -324,7 +324,7 @@
         </exec>
     </target>
 
-    <!-- Build 3 prev revisions -->
+    <!-- Build 4 prev revisions -->
     <target name="team">
         <exec executable="git" outputproperty="current.revision" failonerror="false">
             <arg value="rev-parse"/>
