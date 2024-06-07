@@ -96,48 +96,6 @@
         </junitlauncher>
     </target>
 
-    <!-- Convert native2ascii for localization files -->
-    <target name="native2ascii">
-        <native2ascii encoding="UTF-8" dest="${build.dir}/webapp/WEB-INF/classes" src="${resources.dir}">
-            <include name="**/*.properties" />
-        </native2ascii>
-    </target>
-
-    <!-- Deploy war to helios -->
-    <target name="scp" depends="build">
-        <scp todir="${scp.host}" port="${scp.port}" password="${scp.password}" trust="true" >
-            <fileset dir="${build.dir}">
-                <include name="**/*.war" />
-            </fileset>
-        </scp>
-    </target>
-
-    <!-- Alternative version of the project -->
-    <target name="alt" depends="build">
-        <unwar src="${build.dir}/${war.name}" dest="${build.dir}/alt-webapp">
-            <patternset>
-                <include name="**/*" />
-            </patternset>
-        </unwar>
-
-        <replace dir="${build.dir}/alt-webapp">
-            <include name="**/*.java" />
-            <replacefilter token="variableName" value="alternativeVariableName" />
-            <replacefilter token="ClassName" value="AlternativeClassName" />
-        </replace>
-
-        <war destfile="${build.dir}/${war.name}-alt.war" webxml="${build.dir}/alt-webapp/WEB-INF/web.xml">
-            <manifest>
-                <attribute name="Manifest-Version" value="1.0"/>
-                <attribute name="Version" value="1.0-SNAPSHOT-ALT"/>
-            </manifest>
-            <fileset dir="${build.dir}/alt-webapp">
-                <include name="**/*" />
-                <exclude name="**/WEB-INF/web.xml" />
-            </fileset>
-        </war>
-    </target>
-
     <!-- Alteernative environment -->
     <target name="env">
         <fail unless="java.home" message="java.home is not set in env.properties" />
@@ -157,28 +115,7 @@
             </classpath>
         </java>
     </target>
-
-    <!-- Find the last working revision if compilation fails -->
-    <target name="history">
-        <exec executable="git" outputproperty="current.revision" failonerror="false">
-            <arg value="rev-parse"/>
-            <arg value="HEAD"/>
-        </exec>
-
-        <property name="previous.revision" value="HEAD"/>
-        <property name="found.working.revision" value="false"/>
-
-        <taskdef resource="net/sf/antcontrib/antcontrib.properties">
-            <classpath>
-                <pathelement location="${lib.dir}/ant-contrib.jar"/>
-            </classpath>
-        </taskdef>
-
-        <foreach list="${previous.revision}" param="revision" target="find-working-revision">
-            <param name="revision" value="${previous.revision}"/>
-        </foreach>
-    </target>
-
+    
     <target name="find-working-revision">
         <exec executable="git" failonerror="false">
             <arg value="checkout"/>
@@ -252,17 +189,6 @@
         </war>
     </target>
 
-    <!-- Play music on build -->
-    <target name="music" depends="build">
-        <exec executable="ffplay" failonerror="false">
-            <arg value="-nodisp"/>
-            <arg value="-autoexit"/>
-            <arg value="-t"/>
-            <arg value="35"/>
-            <arg value="${lib.dir}/song.mp3"/>
-        </exec>
-    </target>
-
     <!-- Junit reports -->
     <target name="report" depends="test">
         <mkdir dir="${build.dir}/test-reports"/>
@@ -286,31 +212,6 @@
         </exec>
     </target>
 
-    <!-- Check special classes -->
-    <target name="diff">
-        <exec executable="git" outputproperty="git.status" failonerror="true">
-            <arg value="status"/>
-            <arg value="--porcelain"/>
-        </exec>
-
-        <loadfile property="classes.to.check" srcFile="${lib.dir}/classes.txt">
-            <filterchain>
-                <tokenfilter delimoutput=","/>
-            </filterchain>
-        </loadfile>
-
-        <condition property="changes.detected">
-            <and>
-                <contains string="${git.status}" substring="M"/>
-                <contains string="${git.status}" substring="${classes.to.check}"/>
-            </and>
-        </condition>
-
-        <antcall target="commit">
-            <param name="message" value="Automated commit triggered by changes in specified classes"/>
-        </antcall>
-    </target>
-
     <target name="commit" if="changes.detected">
         <exec executable="git" failonerror="true">
             <arg value="add"/>
@@ -323,63 +224,5 @@
             <arg value="${message}"/>
         </exec>
     </target>
-
-    <!-- Build 4 prev revisions -->
-    <target name="team">
-        <exec executable="git" outputproperty="current.revision" failonerror="false">
-            <arg value="rev-parse"/>
-            <arg value="HEAD"/>
-        </exec>
-
-        <property name="revision1" value="${current.revision}~1"/>
-        <property name="revision2" value="${current.revision}~2"/>
-        <property name="revision3" value="${current.revision}~3"/>
-        <property name="revision4" value="${current.revision}~4"/>
-
-        <echo>Building revision: ${revision1}</echo>
-        <exec executable="git" failonerror="false">
-            <arg value="checkout"/>
-            <arg value="${revision1}"/>
-        </exec>
-        <antcall target="build">
-            <param name="war.name" value="${war.name}-${revision1}.war"/>
-        </antcall>
-
-        <echo>Building revision: ${revision2}</echo>
-        <exec executable="git" failonerror="false">
-            <arg value="checkout"/>
-            <arg value="${revision2}"/>
-        </exec>
-        <antcall target="build">
-            <param name="war.name" value="${war.name}-${revision2}.war"/>
-        </antcall>
-
-        <echo>Building revision: ${revision3}</echo>
-        <exec executable="git" failonerror="false">
-            <arg value="checkout"/>
-            <arg value="${revision3}"/>
-        </exec>
-        <antcall target="build">
-            <param name="war.name" value="${war.name}-${revision3}.war"/>
-        </antcall>
-
-        <echo>Building revision: ${revision4}</echo>
-        <exec executable="git" failonerror="false">
-            <arg value="checkout"/>
-            <arg value="${revision4}"/>
-        </exec>
-        <antcall target="build">
-            <param name="war.name" value="${war.name}-${revision4}.war"/>
-        </antcall>
-
-        <zip destfile="${build.dir}/team-revisions.zip">
-            <fileset dir="${build.dir}">
-                <include name="${war.name}-${revision1}.war"/>
-                <include name="${war.name}-${revision2}.war"/>
-                <include name="${war.name}-${revision3}.war"/>
-                <include name="${war.name}-${revision4}.war"/>
-            </fileset>
-        </zip>
-    </target>
-
+    
 </project>
